@@ -1,8 +1,8 @@
+--upgrade pip
 absl-py==2.1.0
 altair==5.4.1
 anyio==4.4.0
 astunparse==1.6.3
-asyncio==3.4.3
 attrs==24.2.0
 beautifulsoup4==4.12.3
 blinker==1.8.2
@@ -16,7 +16,6 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 contourpy==1.0.7
-csp==0.1a10
 cssselect==1.2.0
 cycler==0.11.0
 Deprecated==1.2.14
@@ -36,7 +35,6 @@ google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.1
 google-pasta==0.2.0
 googleapis-common-protos==1.63.2
-googletrans==4.0.0rc1
 greenlet==3.0.3
 grpcio==1.66.1
 gspread==6.1.2
