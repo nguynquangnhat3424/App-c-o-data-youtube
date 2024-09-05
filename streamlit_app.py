@@ -59,67 +59,72 @@ def layscript_theo_keyword(search_query, so_video):
     video_data = []
 
     # Khởi tạo Playwright
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--mute-audio"])
-        page = browser.new_page()
-        page.goto(url)
-        print("YouTube search page loaded successfully")
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=["--mute-audio"])
+            page = browser.new_page()
+            page.goto(url)
+            print("YouTube search page loaded successfully")
 
-        time.sleep(4)
+            time.sleep(4)
 
-        last_height = page.evaluate("document.documentElement.scrollHeight")
+            last_height = page.evaluate("document.documentElement.scrollHeight")
 
-        while len(page.query_selector_all('ytd-video-renderer')) < so_video:
-            page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight);")
-            time.sleep(2)
+            while len(page.query_selector_all('ytd-video-renderer')) < so_video:
+                page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight);")
+                time.sleep(2)
 
-            new_height = page.evaluate("document.documentElement.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
+                new_height = page.evaluate("document.documentElement.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
 
-        videos = page.query_selector_all('ytd-video-renderer')[:so_video]
+            videos = page.query_selector_all('ytd-video-renderer')[:so_video]
 
-        # Cập nhật thanh tiến độ
-        progress_bar = st.progress(0)
-        step = 1 / so_video
+            # Cập nhật thanh tiến độ
+            progress_bar = st.progress(0)
+            step = 1 / so_video
 
-        for index, video in enumerate(videos):
-            title_element = video.query_selector('yt-formatted-string[aria-label]')
-            title = title_element.inner_text()
+            for index, video in enumerate(videos):
+                title_element = video.query_selector('yt-formatted-string[aria-label]')
+                title = title_element.inner_text()
 
-            video_url_element = video.query_selector('a#thumbnail')
-            video_url = video_url_element.get_attribute('href')
+                video_url_element = video.query_selector('a#thumbnail')
+                video_url = video_url_element.get_attribute('href')
 
-            metadata_elements = video.query_selector_all('span.inline-metadata-item.style-scope.ytd-video-meta-block')
+                metadata_elements = video.query_selector_all('span.inline-metadata-item.style-scope.ytd-video-meta-block')
 
-            if len(metadata_elements) >= 2:
-                views = metadata_elements[0].inner_text()
-                upload_date = metadata_elements[1].inner_text()
-            else:
-                views = 'N/A'
-                upload_date = 'N/A'
+                if len(metadata_elements) >= 2:
+                    views = metadata_elements[0].inner_text()
+                    upload_date = metadata_elements[1].inner_text()
+                else:
+                    views = 'N/A'
+                    upload_date = 'N/A'
 
-            video_data.append({
-                'Tiêu đề': title,
-                'Ngày đăng': upload_date,
-                'Lượt xem': views,
-                'url': video_url
-            })
+                video_data.append({
+                    'Tiêu đề': title,
+                    'Ngày đăng': upload_date,
+                    'Lượt xem': views,
+                    'url': video_url
+                })
 
-            # Lấy transcript sau khi xử lý URL
-            transcript = layscript(page, video_url)
-            video_data[index]['Transcript'] = transcript
+                # Lấy transcript sau khi xử lý URL
+                transcript = layscript(page, video_url)
+                video_data[index]['Transcript'] = transcript
 
-            # Cập nhật thanh tiến độ sau mỗi lần duyệt xong một video (giá trị từ 0 đến 1)
-            progress_bar.progress(min((index + 1) * step, 1))
+                # Cập nhật thanh tiến độ sau mỗi lần duyệt xong một video (giá trị từ 0 đến 1)
+                progress_bar.progress(min((index + 1) * step, 1))
 
-        # Tạo DataFrame
-        df = pd.DataFrame(video_data, columns=['Tiêu đề', 'Ngày đăng', 'Lượt xem', 'url', 'Transcript'])
+            # Tạo DataFrame
+            df = pd.DataFrame(video_data, columns=['Tiêu đề', 'Ngày đăng', 'Lượt xem', 'url', 'Transcript'])
 
-        browser.close()
+            browser.close()
 
-    return df
+        return df
+
+    except Exception as e:
+        print(f"An error occurred during Playwright operations: {e}")
+        return pd.DataFrame()  # Trả về DataFrame rỗng nếu gặp lỗi
 
 def main():
     st.title("YouTube Data Scraper")
