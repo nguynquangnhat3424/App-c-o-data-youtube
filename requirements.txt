@@ -1,4 +1,5 @@
-streamlit
-pandas
-selenium
-youtube-transcript-api
+streamlit==1.19.0
+pandas==2.0.3
+selenium==4.20.0
+youtube-transcript-api==0.7.2
+openpyxl==3.1.2
