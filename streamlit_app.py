@@ -1,3 +1,68 @@
+
+Lỗi FileNotFoundError trong môi trường Streamlit Cloud có thể xảy ra do một số vấn đề liên quan đến việc tải và sử dụng chromedriver. Dưới đây là một số cách giải quyết và hướng dẫn cụ thể để khắc phục vấn đề này:
+
+1. Đảm bảo chromedriver Được Tải Về Đúng Cách
+Trước tiên, hãy kiểm tra lại đoạn mã tải về chromedriver để đảm bảo rằng nó hoạt động đúng trong môi trường của bạn. Hãy chắc chắn rằng chromedriver được tải về và lưu đúng đường dẫn.
+
+python
+Sao chép mã
+def download_chromedriver():
+    url = 'https://github.com/nguynquangnhat3424/App-scrape-data-youtube/raw/main/drivers/chromedriver.exe'
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open('/tmp/chromedriver', 'wb') as file:  # Lưu vào thư mục tạm thời
+            file.write(response.content)
+        return '/tmp/chromedriver'
+    else:
+        raise Exception("Failed to download chromedriver")
+2. Sử Dụng Đường Dẫn Chính Xác
+Đảm bảo rằng đường dẫn đến chromedriver là chính xác và có quyền thực thi trong môi trường Streamlit Cloud. Sử dụng đường dẫn /tmp/chromedriver hoặc đường dẫn phù hợp với môi trường mà bạn đang chạy.
+
+3. Thiết Lập Quyền Thực Thi
+Sau khi tải về chromedriver, bạn cần đảm bảo rằng nó có quyền thực thi. Trong mã của bạn, hãy thêm đoạn mã để thay đổi quyền:
+
+python
+Sao chép mã
+import os
+
+def download_chromedriver():
+    url = 'https://github.com/nguynquangnhat3424/App-scrape-data-youtube/raw/main/drivers/chromedriver.exe'
+    response = requests.get(url)
+    if response.status_code == 200:
+        path = '/tmp/chromedriver'
+        with open(path, 'wb') as file:
+            file.write(response.content)
+        os.chmod(path, 0o755)  # Cấp quyền thực thi
+        return path
+    else:
+        raise Exception("Failed to download chromedriver")
+4. Sử Dụng headless Mode
+Đảm bảo rằng bạn đang sử dụng chế độ headless để tránh việc giao diện đồ họa không hoạt động trong môi trường máy chủ.
+
+python
+Sao chép mã
+options = webdriver.ChromeOptions()
+options.add_argument("disable-extensions")
+options.add_argument("headless")
+options.add_argument("--mute-audio")
+5. Kiểm Tra Phiên Bản chromedriver và Chrome
+Đảm bảo rằng phiên bản của chromedriver và trình duyệt Chrome tương thích. Bạn có thể cần cập nhật chromedriver hoặc sử dụng một phiên bản khác của Chrome nếu cần.
+
+6. Kiểm Tra Log Chi Tiết
+Xem chi tiết log lỗi trong Streamlit Cloud để xác định nguyên nhân cụ thể của lỗi. Truy cập vào phần "Manage app" và xem log để biết thêm thông tin về vấn đề gặp phải.
+
+7. Tạo Một Tệp requirements.txt
+Đảm bảo rằng bạn có tệp requirements.txt để cài đặt các thư viện cần thiết, bao gồm selenium và requests:
+
+makefile
+Sao chép mã
+selenium==4.8.0
+requests==2.28.2
+Ví dụ Code Đã Cập Nhật
+Dưới đây là ví dụ code đã cập nhật với các bước trên:
+
+python
+Sao chép mã
 import streamlit as st
 import pandas as pd
 from selenium import webdriver
@@ -10,14 +75,15 @@ import re
 import requests
 import os
 
-# Tải về chromedriver từ GitHub
 def download_chromedriver():
     url = 'https://github.com/nguynquangnhat3424/App-scrape-data-youtube/raw/main/drivers/chromedriver.exe'
     response = requests.get(url)
     if response.status_code == 200:
-        with open('chromedriver.exe', 'wb') as file:
+        path = '/tmp/chromedriver'
+        with open(path, 'wb') as file:
             file.write(response.content)
-        return 'chromedriver.exe'
+        os.chmod(path, 0o755)
+        return path
     else:
         raise Exception("Failed to download chromedriver")
 
