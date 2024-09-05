@@ -9,6 +9,7 @@ from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, Tran
 import re
 import requests
 import shutil
+import os
 
 def download_chromedriver(url, local_path):
     # Tải xuống chromedriver từ URL và lưu vào đường dẫn cục bộ
@@ -70,9 +71,12 @@ def layscript_theo_keyword(search_query, so_video):
     video_data = []
 
     # Tải chromedriver từ GitHub
-    chromedriver_url = "https://raw.githubusercontent.com/nguynquangnhat3424/App-scrape-data-youtube/main/drivers/chromedriver.exe"
-    local_chromedriver_path = "chromedriver.exe"
+    chromedriver_url = "https://raw.githubusercontent.com/nguynquangnhat3424/App-scrape-data-youtube/main/drivers/chromedriver"
+    local_chromedriver_path = "chromedriver"
     download_chromedriver(chromedriver_url, local_chromedriver_path)
+
+    # Cung cấp quyền thực thi cho chromedriver
+    os.chmod(local_chromedriver_path, 0o755)
 
     # Khởi tạo trình duyệt
     service = Service(local_chromedriver_path)
