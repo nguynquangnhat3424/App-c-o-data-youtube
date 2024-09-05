@@ -8,36 +8,35 @@ import time
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
 import re
 import requests
-import shutil
 import os
 
-def download_chromedriver(url, local_path):
-    # Tải xuống chromedriver từ URL và lưu vào đường dẫn cục bộ
-    response = requests.get(url, stream=True)
-    with open(local_path, 'wb') as file:
-        shutil.copyfileobj(response.raw, file)
-    del response
+# Tải về chromedriver từ GitHub
+def download_chromedriver():
+    url = 'https://github.com/nguynquangnhat3424/App-scrape-data-youtube/raw/main/drivers/chromedriver.exe'
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open('chromedriver.exe', 'wb') as file:
+            file.write(response.content)
+        return 'chromedriver.exe'
+    else:
+        raise Exception("Failed to download chromedriver")
 
 def layscript(browser, url):
     print("Initiating scrape for youtube transcript")
     
     def extract_video_id(url):
-        # Sử dụng regex để tìm video ID
         match = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*', url)
         if match:
             return match.group(1)
         else:
             raise ValueError("Invalid YouTube URL")
 
-    # Trích xuất video ID từ URL
     video_id = extract_video_id(url)
 
-    # Danh sách các ngôn ngữ ưu tiên
-    languages_priority = ['vi', 'en', 'fr', 'es']  # Thử tiếng Việt, Anh, Pháp, Tây Ban Nha
+    languages_priority = ['vi', 'en', 'fr', 'es']
 
     transcript = None
 
-    # Thử lấy transcript với từng ngôn ngữ trong danh sách
     try:
         for language in languages_priority:
             try:
@@ -53,7 +52,6 @@ def layscript(browser, url):
         print(f"An error occurred: {e}")
         transcript = "video không tìm thấy script"
     
-    # Loại bỏ "[âm nhạc]" khỏi transcript nếu tìm thấy
     transcript = transcript.replace("[âm nhạc]", "") if transcript else "video không tìm thấy script"
     
     return transcript
@@ -70,16 +68,9 @@ def layscript_theo_keyword(search_query, so_video):
 
     video_data = []
 
-    # Tải chromedriver từ GitHub
-    chromedriver_url = "https://raw.githubusercontent.com/nguynquangnhat3424/App-scrape-data-youtube/main/drivers/chromedriver"
-    local_chromedriver_path = "chromedriver"
-    download_chromedriver(chromedriver_url, local_chromedriver_path)
-
-    # Cung cấp quyền thực thi cho chromedriver
-    os.chmod(local_chromedriver_path, 0o755)
-
-    # Khởi tạo trình duyệt
-    service = Service(local_chromedriver_path)
+    # Tải về và thiết lập chromedriver
+    chromedriver_path = download_chromedriver()
+    service = Service(chromedriver_path)
     options = webdriver.ChromeOptions()
     options.add_argument("disable-extensions")
     options.add_argument("headless")
@@ -88,30 +79,25 @@ def layscript_theo_keyword(search_query, so_video):
     browser = webdriver.Chrome(service=service, options=options)
     print("Browser started successfully")
 
-    # Mở trang youtube
     browser.get(url)
     print("Youtube search page loaded successfully")
 
     time.sleep(4)
     
-    # Scroll trang xuống để tải thêm video
     last_height = browser.execute_script("return document.documentElement.scrollHeight")
 
     while len(browser.find_elements(By.CSS_SELECTOR, 'ytd-video-renderer')) < so_video:
         browser.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
-        time.sleep(2)  # Chờ một chút để trang tải thêm nội dung
+        time.sleep(2)
 
         new_height = browser.execute_script("return document.documentElement.scrollHeight")
         if new_height == last_height:
-            break  # Nếu không có thêm nội dung mới thì dừng lại
+            break
         last_height = new_height
 
     videos = browser.find_elements(By.CSS_SELECTOR, 'ytd-video-renderer')[:so_video]
 
-    # Cập nhật thanh tiến độ
     progress_bar = st.progress(0)
-
-    # Tính tỷ lệ mỗi khi duyệt một video (0 đến 1)
     step = 1 / so_video
 
     for index, video in enumerate(videos):
@@ -137,17 +123,13 @@ def layscript_theo_keyword(search_query, so_video):
             'url': video_url
         })
 
-        # Lấy transcript sau khi xử lý URL
         transcript = layscript(browser, video_url)
         video_data[index]['Transcript'] = transcript
 
-        # Cập nhật thanh tiến độ sau mỗi lần duyệt xong một video (giá trị từ 0 đến 1)
         progress_bar.progress(min((index + 1) * step, 1))
 
-    # Tạo DataFrame
     df = pd.DataFrame(video_data, columns=['Tiêu đề', 'Ngày đăng', 'Lượt xem', 'url', 'Transcript'])
 
-    # Đóng trình duyệt
     browser.quit()
 
     return df
@@ -164,10 +146,8 @@ def main():
         
         st.success("Cào dữ liệu hoàn tất!")
         
-        # Hiển thị DataFrame trên giao diện web
         st.dataframe(df)
 
-        # Tạo file Excel và cung cấp link tải về
         excel_filename = f"youtube_data.xlsx"
         df.to_excel(excel_filename, index=False)
         
