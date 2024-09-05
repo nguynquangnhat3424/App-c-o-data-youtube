@@ -7,7 +7,15 @@ import urllib.parse
 import time
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
 import re
+import requests
+import shutil
 
+def download_chromedriver(url, local_path):
+    # Tải xuống chromedriver từ URL và lưu vào đường dẫn cục bộ
+    response = requests.get(url, stream=True)
+    with open(local_path, 'wb') as file:
+        shutil.copyfileobj(response.raw, file)
+    del response
 
 def layscript(browser, url):
     print("Initiating scrape for youtube transcript")
@@ -56,14 +64,18 @@ def generate_youtube_search_url(search_query):
     full_url = f"{base_url}{encoded_query}{sp_param}"
     return full_url
 
-
 def layscript_theo_keyword(search_query, so_video):
     url = generate_youtube_search_url(search_query)
 
     video_data = []
 
+    # Tải chromedriver từ GitHub
+    chromedriver_url = "https://raw.githubusercontent.com/nguynquangnhat3424/App-scrape-data-youtube/main/drivers/chromedriver.exe"
+    local_chromedriver_path = "chromedriver.exe"
+    download_chromedriver(chromedriver_url, local_chromedriver_path)
+
     # Khởi tạo trình duyệt
-    service = Service("C:/Users/Welcome/Documents/Python/Scrape tiktok video/chromedriver-win64/chromedriver.exe")
+    service = Service(local_chromedriver_path)
     options = webdriver.ChromeOptions()
     options.add_argument("disable-extensions")
     options.add_argument("headless")
