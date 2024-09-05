@@ -1,7 +1,6 @@
 streamlit
 pandas 
 selenium
-urllib.parse
 time
 youtube_transcript_api
 re
