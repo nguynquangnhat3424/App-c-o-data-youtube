@@ -81,16 +81,19 @@ def layscript_theo_keyword(search_query, so_video):
 
             videos = page.query_selector_all('ytd-video-renderer')[:so_video]
 
+            if not videos:
+                print("No videos found on the page.")
+            
             # Cập nhật thanh tiến độ
             progress_bar = st.progress(0)
             step = 1 / so_video
 
             for index, video in enumerate(videos):
                 title_element = video.query_selector('yt-formatted-string[aria-label]')
-                title = title_element.inner_text()
+                title = title_element.inner_text() if title_element else "No title"
 
                 video_url_element = video.query_selector('a#thumbnail')
-                video_url = video_url_element.get_attribute('href')
+                video_url = video_url_element.get_attribute('href') if video_url_element else "No URL"
 
                 metadata_elements = video.query_selector_all('span.inline-metadata-item.style-scope.ytd-video-meta-block')
 
@@ -138,20 +141,23 @@ def main():
         
         st.success("Cào dữ liệu hoàn tất!")
         
-        # Hiển thị DataFrame trên giao diện web
-        st.dataframe(df)
+        if not df.empty:
+            # Hiển thị DataFrame trên giao diện web
+            st.dataframe(df)
 
-        # Tạo file Excel và cung cấp link tải về
-        excel_filename = f"youtube_data.xlsx"
-        df.to_excel(excel_filename, index=False)
-        
-        with open(excel_filename, "rb") as file:
-            st.download_button(
-                label="Tải về file Excel",
-                data=file,
-                file_name=excel_filename,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            # Tạo file Excel và cung cấp link tải về
+            excel_filename = f"youtube_data.xlsx"
+            df.to_excel(excel_filename, index=False)
+            
+            with open(excel_filename, "rb") as file:
+                st.download_button(
+                    label="Tải về file Excel",
+                    data=file,
+                    file_name=excel_filename,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+        else:
+            st.warning("Không có dữ liệu để hiển thị.")
 
 if __name__ == "__main__":
     main()
