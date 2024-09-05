@@ -3,3 +3,4 @@ pandas
 selenium
 youtube_transcript_api
 requests
+playwright
